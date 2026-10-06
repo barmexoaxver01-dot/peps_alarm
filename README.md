@@ -95,9 +95,4 @@ de barras. Abre la camara del telefono, lee codigos de barras comunes
 campo automaticamente -- el lector USB de escritorio sigue funcionando
 igual de bien si prefieres seguir usando eso en el area fija de recibo.
 
-## Proximos pasos sugeridos (no incluidos, YAGNI por ahora)
 
-- Notificaciones (correo/Teams) cuando algo pasa a rojo
-- Ubicacion en piso (pasillo/anaquel) por lote
-- Reporte historico de mermas evitadas vs. mermas reales
-- Edicion/baja de usuarios desde el panel de admin
