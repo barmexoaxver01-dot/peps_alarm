@@ -1,4 +1,5 @@
 """PEPS ALARM - entry point."""
+import os
 import secrets
 
 from fastapi import FastAPI, Request
@@ -10,7 +11,12 @@ from app.database import init_db
 from app.routers import admin, auth, dashboard, push, recibo
 
 app = FastAPI(title="PEPS ALARM")
-app.add_middleware(SessionMiddleware, secret_key=secrets.token_hex(32))
+# SESSION_SECRET fija (via variable de entorno) evita que todo el mundo
+# se deslogee cada vez que el servidor se reinicia (ej. hosting gratis que
+# duerme por inactividad). En local sin la variable, cae a una random --
+# nadie depende de sesiones persistentes en desarrollo.
+SESSION_SECRET = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
+app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
