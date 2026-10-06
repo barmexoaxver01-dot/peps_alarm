@@ -17,8 +17,10 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
-@router.get("/admin")
-def admin_home(request: Request, db: sqlite3.Connection = Depends(get_db), user=Depends(require_role("admin"))):
+def _admin_context(request: Request, db: sqlite3.Connection, user, error: str | None = None) -> dict:
+    """Junta todo lo que admin.html necesita. Factorizado para no repetir
+    las mismas queries en cada handler que re-renderiza /admin (ej. cuando
+    create_user falla por username duplicado)."""
     dias_amarillo, dias_rojo = get_thresholds(db)
     teams_webhook_url = db.execute(
         "SELECT value FROM settings WHERE key = 'teams_webhook_url'"
@@ -33,20 +35,22 @@ def admin_home(request: Request, db: sqlite3.Connection = Depends(get_db), user=
         "SELECT value FROM settings WHERE key = 'piso1_token'"
     ).fetchone()["value"]
     piso1_url = f"{request.base_url}piso1?token={piso1_token}"
-    return templates.TemplateResponse(
-        request,
-        "admin.html",
-        {
-            "user": user,
-            "dias_amarillo": dias_amarillo,
-            "dias_rojo": dias_rojo,
-            "teams_webhook_url": teams_webhook_url,
-            "usuarios": usuarios,
-            "pendientes": pendientes,
-            "piso1_url": piso1_url,
-            "mensaje": None,
-        },
-    )
+    return {
+        "user": user,
+        "dias_amarillo": dias_amarillo,
+        "dias_rojo": dias_rojo,
+        "teams_webhook_url": teams_webhook_url,
+        "usuarios": usuarios,
+        "pendientes": pendientes,
+        "piso1_url": piso1_url,
+        "mensaje": None,
+        "error": error,
+    }
+
+
+@router.get("/admin")
+def admin_home(request: Request, db: sqlite3.Connection = Depends(get_db), user=Depends(require_role("admin"))):
+    return templates.TemplateResponse(request, "admin.html", _admin_context(request, db, user))
 
 
 @router.post("/admin/settings")
@@ -66,12 +70,21 @@ def update_settings(
 
 @router.post("/admin/usuarios")
 def create_user(
+    request: Request,
     username: str = Form(...),
     password: str = Form(...),
     role: str = Form(...),
     db: sqlite3.Connection = Depends(get_db),
     user=Depends(require_role("admin")),
 ):
+    existente = db.execute("SELECT 1 FROM users WHERE username = ?", (username,)).fetchone()
+    if existente:
+        return templates.TemplateResponse(
+            request,
+            "admin.html",
+            _admin_context(request, db, user, error=f"El usuario '{username}' ya existe."),
+            status_code=400,
+        )
     db.execute(
         "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
         (username, hash_password(password), role),

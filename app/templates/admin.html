@@ -36,6 +36,36 @@
 
     <div class="bg-white rounded-xl shadow p-6">
         <h2 class="font-semibold mb-4">Usuarios</h2>
+        {% if error %}
+        <div class="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-sm">{{ error }}</div>
+        {% endif %}
+        {% if pendientes %}
+        <div class="mb-4 border border-yellow-300 bg-yellow-50 rounded-lg p-3">
+            <h3 class="text-sm font-semibold text-yellow-800 mb-2">
+                Solicitudes pendientes ({{ pendientes|length }})
+            </h3>
+            <ul class="divide-y divide-yellow-200">
+                {% for p in pendientes %}
+                <li class="py-2 flex items-center justify-between text-sm gap-2">
+                    <span>{{ p.username }} <span class="text-gray-500">({{ p.role }})</span></span>
+                    <span class="flex gap-2">
+                        <form method="post" action="/admin/aprobar/{{ p.id }}">
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white rounded px-3 py-1 text-xs font-semibold">
+                                Aprobar
+                            </button>
+                        </form>
+                        <form method="post" action="/admin/rechazar/{{ p.id }}"
+                              onsubmit="return confirm('Rechazar y borrar esta solicitud?');">
+                            <button type="submit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded px-3 py-1 text-xs font-semibold">
+                                Rechazar
+                            </button>
+                        </form>
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
         <ul class="divide-y mb-4">
             {% for u in usuarios %}
             <li class="py-2 flex justify-between text-sm">

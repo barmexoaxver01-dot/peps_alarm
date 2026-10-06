@@ -7,3 +7,4 @@ peps_alarm_dump.sql
 *.log
 peps_alarm_qr*.png
 *.egg-info/
+.pytest_cache/

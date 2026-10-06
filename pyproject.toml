@@ -15,5 +15,11 @@ dependencies = [
     "qrcode[pil]>=8.0.0",
 ]
 
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+]
+
 [tool.uv]
 index-url = "https://pypi.ci.artifacts.walmart.com/artifactory/api/pypi/external-pypi/simple"
