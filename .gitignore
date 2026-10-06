@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+peps_alarm.db
+peps_alarm_dump.sql
+.env
+*.log
+peps_alarm_qr*.png
+*.egg-info/

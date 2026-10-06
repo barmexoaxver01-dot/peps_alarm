@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Entrar - PEPS ALARM{% endblock %}
+{% block content %}
+<div class="max-w-sm mx-auto mt-24 bg-white rounded-xl shadow p-8">
+    <h1 class="text-2xl font-bold text-center mb-1"> PEPS ALARM</h1>
+    <p class="text-center text-gray-500 mb-6">Control de caducidad en piso de venta</p>
+    {% if error %}
+    <div class="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-sm">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/login" class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Usuario</label>
+            <input type="text" name="username" required autofocus
+                   class="mt-1 w-full border rounded px-3 py-2 focus:ring-2 focus:ring-yellow-400">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+            <input type="password" name="password" required
+                   class="mt-1 w-full border rounded px-3 py-2 focus:ring-2 focus:ring-yellow-400">
+        </div>
+        <button type="submit"
+                class="w-full bg-gray-900 text-white rounded py-2 font-semibold hover:bg-gray-800">
+            Entrar
+        </button>
+    </form>
+    <a href="/solicitar-acceso" class="block text-center mt-4 text-sm text-gray-600 underline">
+        No tengo cuenta, quiero pedir acceso
+    </a>
+</div>
+{% endblock %}

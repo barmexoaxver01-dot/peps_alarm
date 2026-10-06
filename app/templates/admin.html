@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Admin - PEPS ALARM{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Administracion</h1>
+
+<div class="grid md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="font-semibold mb-4">Umbrales de alerta (dias)</h2>
+        <form method="post" action="/admin/settings" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Amarillo (dias o menos)</label>
+                <input type="number" name="dias_amarillo" value="{{ dias_amarillo }}" min="1" required
+                       class="mt-1 w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Rojo (dias o menos)</label>
+                <input type="number" name="dias_rojo" value="{{ dias_rojo }}" min="0" required
+                       class="mt-1 w-full border rounded px-3 py-2">
+            </div>
+            <div class="border-t pt-4">
+                <label class="block text-sm font-medium text-gray-700">URL de webhook de Teams (opcional)</label>
+                <input type="url" name="teams_webhook_url" value="{{ teams_webhook_url }}"
+                       placeholder="https://.../webhook/..."
+                       class="mt-1 w-full border rounded px-3 py-2 text-sm">
+                <p class="text-xs text-gray-500 mt-1">
+                    Se genera desde el canal de Teams de tu equipo (Conectores o Workflows -
+                    "Post to a channel when a webhook request is received"). Pega la URL aqui
+                    para que el boton "Enviar alertas a Teams" del dashboard funcione.
+                </p>
+            </div>
+            <button type="submit" class="bg-gray-900 text-white rounded px-4 py-2 font-semibold">
+                Guardar
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="font-semibold mb-4">Usuarios</h2>
+        <ul class="divide-y mb-4">
+            {% for u in usuarios %}
+            <li class="py-2 flex justify-between text-sm">
+                <span>{{ u.username }}</span>
+                <span class="text-gray-500">{{ u.role }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        <form method="post" action="/admin/usuarios" class="space-y-3 border-t pt-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Usuario nuevo</label>
+                <input type="text" name="username" required class="mt-1 w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+                <input type="password" name="password" required class="mt-1 w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Rol</label>
+                <select name="role" class="mt-1 w-full border rounded px-3 py-2">
+                    <option value="recibo">Recibo</option>
+                    <option value="piso">Piso de venta</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <button type="submit" class="bg-gray-900 text-white rounded px-4 py-2 font-semibold">
+                Crear usuario
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow p-6 mt-6">
+    <h2 class="font-semibold mb-2">Modo piso1 (acceso compartido por QR)</h2>
+    <p class="text-sm text-gray-600 mb-4">
+        Cualquier asociado que escanee este QR entra directo al dashboard de
+        piso, sin usuario ni contraseña. Pégalo o imprímelo junto a la TC
+        compartida del área de piso. Si el QR se pierde, se comparte fuera
+        de la tienda, o nomás quieres rotarlo por rutina, dale
+        "Regenerar" -- el QR viejo deja de servir al instante.
+    </p>
+    <div class="flex flex-wrap items-center gap-6">
+        <img src="/admin/piso1/qr.png" alt="QR de acceso piso1" class="border rounded w-40 h-40">
+        <div class="flex-1 min-w-[250px] space-y-3">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">URL (por si no se puede escanear)</label>
+                <input type="text" readonly value="{{ piso1_url }}"
+                       onclick="this.select()"
+                       class="mt-1 w-full border rounded px-3 py-2 text-xs text-gray-600 bg-gray-50">
+            </div>
+            <form method="post" action="/admin/piso1/regenerar"
+                  onsubmit="return confirm('El QR actual dejara de funcionar de inmediato. ¿Seguro?');">
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white rounded px-4 py-2 font-semibold text-sm">
+                    Regenerar (revoca el QR actual)
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

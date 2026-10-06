@@ -1,0 +1,17 @@
+{% if barcode is defined %}
+<input type="hidden" name="barcode" value="{{ barcode }}">
+{% endif %}
+<div>
+    <label class="block text-sm font-medium text-gray-700">Nombre del producto</label>
+    <input type="text" name="nombre" value="{{ nombre|default('') }}" required
+           class="mt-1 w-full border rounded px-3 py-2 focus:ring-2 focus:ring-yellow-400"
+           placeholder="Si es nuevo, escribelo aqui">
+    {% if es_nuevo is defined and es_nuevo %}
+    <p class="text-xs text-yellow-700 mt-1">Producto nuevo, se agregara al catalogo.</p>
+    {% endif %}
+</div>
+<div>
+    <label class="block text-sm font-medium text-gray-700">Categoria (opcional)</label>
+    <input type="text" name="categoria" value=""
+           class="mt-1 w-full border rounded px-3 py-2 focus:ring-2 focus:ring-yellow-400">
+</div>

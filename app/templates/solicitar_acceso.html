@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Solicitar acceso - PEPS ALARM{% endblock %}
+{% block content %}
+<div class="max-w-sm mx-auto mt-16 bg-white rounded-xl shadow p-8">
+    <h1 class="text-xl font-bold text-center mb-1">Solicitar acceso</h1>
+    <p class="text-center text-gray-500 text-sm mb-6">
+        Elige tu usuario y contrasena. Un administrador tiene que aprobar
+        tu cuenta antes de que puedas entrar.
+    </p>
+
+    {% if enviado %}
+    <div class="bg-green-50 border border-green-300 text-green-800 rounded px-4 py-3 text-sm">
+        Listo, tu solicitud quedo registrada. Avisale a tu administrador
+        para que la apruebe desde el panel de Admin.
+    </div>
+    <a href="/login" class="block text-center mt-4 text-sm text-gray-600 underline">Volver al login</a>
+    {% else %}
+    {% if error %}
+    <div class="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-sm">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/solicitar-acceso" class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Usuario</label>
+            <input type="text" name="username" required autofocus
+                   class="mt-1 w-full border rounded px-3 py-2 focus:ring-2 focus:ring-yellow-400">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Contrasena</label>
+            <input type="password" name="password" required
+                   class="mt-1 w-full border rounded px-3 py-2 focus:ring-2 focus:ring-yellow-400">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Que vas a usar</label>
+            <select name="role" class="mt-1 w-full border rounded px-3 py-2">
+                <option value="piso">Piso de venta (ver alarmas)</option>
+                <option value="recibo">Recibo (capturar productos)</option>
+            </select>
+        </div>
+        <button type="submit" class="w-full bg-gray-900 text-white rounded py-2 font-semibold hover:bg-gray-800">
+            Pedir acceso
+        </button>
+    </form>
+    <a href="/login" class="block text-center mt-4 text-sm text-gray-600 underline">Ya tengo cuenta</a>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}PEPS ALARM{% endblock %}</title>
+
+    <!-- PWA: hace que se pueda "instalar" en el telefono como si fuera app -->
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <meta name="theme-color" content="#111827">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PEPS ALARM">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    {% if request.session.get('user_id') %}
+    <nav class="bg-gray-900 text-white px-4 py-3 flex flex-wrap items-center justify-between gap-y-2 gap-x-4">
+        <div class="flex flex-wrap items-center gap-4">
+            <span class="font-bold text-lg">PEPS ALARM</span>
+            {% if request.session.get('role') in ['recibo', 'admin'] %}
+            <a href="/recibo" class="hover:text-yellow-300 py-1">Recibo</a>
+            {% endif %}
+            {% if request.session.get('role') in ['piso', 'admin'] %}
+            <a href="/dashboard" class="hover:text-yellow-300 py-1">Alarmas</a>
+            {% endif %}
+            {% if request.session.get('role') == 'admin' %}
+            <a href="/admin" class="hover:text-yellow-300 py-1">Admin</a>
+            {% endif %}
+        </div>
+        <div class="flex items-center gap-3 text-sm">
+            <span class="hidden sm:inline">{{ request.session.get('username') }} ({{ request.session.get('role') }})</span>
+            <button type="button" onclick="activarNotificaciones()"
+                    class="bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded text-xs sm:text-sm">
+                Notificaciones
+            </button>
+            <a href="/logout" class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded">Salir</a>
+        </div>
+    </nav>
+    {% endif %}
+    <main class="max-w-5xl mx-auto p-4 sm:p-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = atob(base64);
+            return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+        }
+
+        async function activarNotificaciones() {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                alert('Este navegador no soporta notificaciones push. En iPhone, agrega la app a tu pantalla de inicio primero.');
+                return;
+            }
+            const permiso = await Notification.requestPermission();
+            if (permiso !== 'granted') {
+                alert('No se activaron las notificaciones (permiso no concedido).');
+                return;
+            }
+            try {
+                const registro = await navigator.serviceWorker.ready;
+                const vapidKey = await fetch('/push/vapid-public-key').then((r) => r.text());
+                const suscripcion = await registro.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(vapidKey),
+                });
+                await fetch('/push/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(suscripcion),
+                });
+                alert('Notificaciones activadas en este dispositivo.');
+            } catch (err) {
+                alert('No se pudo activar: ' + err);
+            }
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

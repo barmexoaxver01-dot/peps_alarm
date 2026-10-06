@@ -1,0 +1,9 @@
+{% if ok %}
+<div class="bg-blue-50 border border-blue-200 text-blue-800 rounded px-3 py-2">
+    {{ mensaje }}
+    <button type="button" onclick="document.getElementById('fecha_caducidad').value='{{ fecha }}'"
+            class="ml-2 underline font-semibold">Usar fecha {{ fecha }}</button>
+</div>
+{% else %}
+<div class="bg-gray-50 border border-gray-200 text-gray-600 rounded px-3 py-2">{{ mensaje }}</div>
+{% endif %}

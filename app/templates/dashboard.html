@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Alarmas - PEPS ALARM{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Alarmas de caducidad</h1>
+
+<div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+    <div class="flex flex-wrap gap-2">
+        <button hx-post="/dashboard/notificar" hx-target="#notificacion-resultado" hx-swap="innerHTML"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded font-semibold">
+            Enviar alertas a Teams
+        </button>
+        <button hx-post="/dashboard/notificar-push" hx-target="#notificacion-resultado" hx-swap="innerHTML"
+                class="bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2 rounded font-semibold">
+            Enviar notificacion push
+        </button>
+    </div>
+    <div id="notificacion-resultado" class="text-sm"></div>
+</div>
+
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="bg-black text-white rounded-lg p-4 text-center">
+        <div class="text-2xl font-bold">{{ resumen.caducado }}</div>
+        <div class="text-xs uppercase">Caducados</div>
+    </div>
+    <div class="bg-red-500 text-white rounded-lg p-4 text-center">
+        <div class="text-2xl font-bold">{{ resumen.rojo }}</div>
+        <div class="text-xs uppercase">Urgente</div>
+    </div>
+    <div class="bg-yellow-400 text-gray-900 rounded-lg p-4 text-center">
+        <div class="text-2xl font-bold">{{ resumen.amarillo }}</div>
+        <div class="text-xs uppercase">Pronto</div>
+    </div>
+    <div class="bg-green-500 text-white rounded-lg p-4 text-center">
+        <div class="text-2xl font-bold">{{ resumen.verde }}</div>
+        <div class="text-xs uppercase">OK</div>
+    </div>
+</div>
+
+<!-- Vista movil: tarjetas (la tabla no cabe bien en pantallas chicas) -->
+<div class="md:hidden space-y-3">
+    {% for lote in lotes %}
+    <div class="lote-card bg-white rounded-xl shadow p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="{{ lote.estilo.bg }} {{ lote.estilo.text }} px-2 py-1 rounded text-xs font-semibold">
+                {{ lote.estilo.label }}
+            </span>
+            <span class="text-xs text-gray-500">{{ lote.dias_restantes }} dias</span>
+        </div>
+        <p class="font-semibold">{{ lote.nombre }}</p>
+        <p class="text-xs text-gray-500 mb-2">{{ lote.barcode }} - cant. {{ lote.cantidad }} - caduca {{ lote.fecha_caducidad }}</p>
+        <button hx-post="/dashboard/retirar/{{ lote.id }}"
+                hx-target="closest .lote-card" hx-swap="outerHTML"
+                hx-confirm="¿Marcar este lote como retirado del piso?"
+                class="w-full bg-gray-800 hover:bg-gray-900 text-white text-sm py-2 rounded">
+            Retirar
+        </button>
+    </div>
+    {% else %}
+    <p class="text-center text-gray-500 py-6">No hay lotes activos. Buen trabajo!</p>
+    {% endfor %}
+</div>
+
+<!-- Vista escritorio: tabla -->
+<div class="hidden md:block bg-white rounded-xl shadow overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-gray-100 text-left">
+            <tr>
+                <th class="p-3">Estado</th>
+                <th class="p-3">Producto</th>
+                <th class="p-3">Codigo</th>
+                <th class="p-3">Cantidad</th>
+                <th class="p-3">Caduca</th>
+                <th class="p-3">Dias restantes</th>
+                <th class="p-3"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lote in lotes %}
+            <tr class="border-t">
+                <td class="p-3">
+                    <span class="{{ lote.estilo.bg }} {{ lote.estilo.text }} px-2 py-1 rounded text-xs font-semibold">
+                        {{ lote.estilo.label }}
+                    </span>
+                </td>
+                <td class="p-3">{{ lote.nombre }}</td>
+                <td class="p-3 text-gray-500">{{ lote.barcode }}</td>
+                <td class="p-3">{{ lote.cantidad }}</td>
+                <td class="p-3">{{ lote.fecha_caducidad }}</td>
+                <td class="p-3">{{ lote.dias_restantes }}</td>
+                <td class="p-3">
+                    <button hx-post="/dashboard/retirar/{{ lote.id }}"
+                            hx-target="closest tr" hx-swap="outerHTML"
+                            hx-confirm="¿Marcar este lote como retirado del piso?"
+                            class="bg-gray-800 hover:bg-gray-900 text-white text-xs px-3 py-1 rounded">
+                        Retirar
+                    </button>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="p-6 text-center text-gray-500">No hay lotes activos. Buen trabajo!</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

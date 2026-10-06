@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Recibo - PEPS ALARM{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Recibo de mercancia</h1>
+
+<form id="form-recibo" hx-post="/recibo/submit" hx-target="#resultado" hx-swap="innerHTML"
+      class="bg-white rounded-xl shadow p-6 space-y-4 max-w-xl">
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700">Codigo de barras</label>
+        <div class="flex gap-2 mt-1">
+            <input type="text" name="barcode" id="barcode" required autofocus
+                   hx-post="/recibo/lookup" hx-trigger="keyup changed delay:300ms, blur"
+                   hx-target="#producto-fields" hx-swap="innerHTML"
+                   class="flex-1 border rounded px-3 py-2 focus:ring-2 focus:ring-yellow-400"
+                   placeholder="Escanea o teclea el codigo">
+            <button type="button" onclick="iniciarScanner()"
+                    class="bg-gray-800 hover:bg-gray-900 text-white px-3 py-2 rounded text-sm whitespace-nowrap">
+                Camara
+            </button>
+        </div>
+        <div id="camera-box" class="hidden mt-2 bg-black rounded-lg overflow-hidden">
+            <div id="camera-reader" class="w-full"></div>
+            <button type="button" onclick="detenerScanner()"
+                    class="w-full bg-red-600 hover:bg-red-700 text-white text-sm py-2">
+                Cancelar
+            </button>
+        </div>
+    </div>
+
+    <div id="producto-fields">
+        {% include "partials/producto_fields.html" with context %}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700">Cantidad</label>
+        <input type="number" name="cantidad" value="1" min="1" required
+               class="mt-1 w-full border rounded px-3 py-2 focus:ring-2 focus:ring-yellow-400">
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700">Fecha de caducidad</label>
+        <input type="date" name="fecha_caducidad" id="fecha_caducidad" required
+               class="mt-1 w-full border rounded px-3 py-2 focus:ring-2 focus:ring-yellow-400">
+    </div>
+
+    <div class="border-t pt-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+            Opcional: foto del empaque para detectar la fecha automaticamente
+        </label>
+        <input type="file" name="foto" accept="image/*" capture="environment"
+               hx-post="/recibo/ocr" hx-encoding="multipart/form-data"
+               hx-target="#ocr-resultado" hx-swap="innerHTML"
+               class="text-sm">
+        <div id="ocr-resultado" class="mt-2 text-sm"></div>
+    </div>
+
+    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white rounded py-2 font-semibold">
+        Registrar lote
+    </button>
+</form>
+
+<div id="resultado" class="max-w-xl mt-4"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+    let scanner = null;
+
+    function iniciarScanner() {
+        document.getElementById('camera-box').classList.remove('hidden');
+        scanner = new Html5Qrcode('camera-reader');
+        scanner.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 250, height: 120 } },
+            (codigoDetectado) => {
+                const input = document.getElementById('barcode');
+                input.value = codigoDetectado;
+                htmx.trigger(input, 'keyup');
+                detenerScanner();
+            }
+        ).catch((err) => {
+            alert('No se pudo abrir la camara: ' + err);
+            document.getElementById('camera-box').classList.add('hidden');
+        });
+    }
+
+    function detenerScanner() {
+        if (!scanner) return;
+        scanner.stop().then(() => {
+            document.getElementById('camera-box').classList.add('hidden');
+            scanner = null;
+        }).catch(() => {
+            document.getElementById('camera-box').classList.add('hidden');
+        });
+    }
+</script>
+{% endblock %}
