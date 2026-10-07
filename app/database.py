@@ -3,9 +3,13 @@
 Kept deliberately simple: one small internal tool, one file database,
 no ORM. Explicit SQL is easy to read and easy to change.
 """
+import base64
 import secrets
 import sqlite3
 from pathlib import Path
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
 
 from app.security import hash_password
 
@@ -89,9 +93,50 @@ def init_db() -> None:
                 (key, value),
             )
         _bootstrap_piso1(conn)
+        _bootstrap_vapid_keys(conn)
         conn.commit()
     finally:
         conn.close()
+
+
+def _b64url(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).decode("utf-8").rstrip("=")
+
+
+def _bootstrap_vapid_keys(conn: sqlite3.Connection) -> None:
+    """Genera el par de llaves VAPID para Web Push la primera vez que la
+    app arranca, si todavia no existen -- asi cualquier despliegue nuevo
+    (local o en hosting) tiene notificaciones push funcionando sin pasos
+    manuales extra. Si ya existen, no las toca (serian suscripciones de
+    usuarios reales invalidadas si las regeneramos sin querer).
+    """
+    existe = conn.execute(
+        "SELECT 1 FROM settings WHERE key = 'vapid_private_key'"
+    ).fetchone()
+    if existe:
+        return
+
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    public_key = private_key.public_key()
+
+    # py_vapid.Vapid.from_string() espera el DER de la llave privada, en
+    # base64 url-safe sin padding -- NO un PEM con encabezados.
+    private_der = private_key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    # La Push API del navegador (applicationServerKey) quiere el punto
+    # publico sin comprimir: 0x04 + X (32 bytes) + Y (32 bytes).
+    numbers = public_key.public_numbers()
+    raw_point = b"\x04" + numbers.x.to_bytes(32, "big") + numbers.y.to_bytes(32, "big")
+
+    for key, value in [
+        ("vapid_private_key", _b64url(private_der)),
+        ("vapid_public_key", _b64url(raw_point)),
+        ("vapid_claim_email", "mailto:admin@example.com"),
+    ]:
+        conn.execute("INSERT INTO settings (key, value) VALUES (?, ?)", (key, value))
 
 
 def _bootstrap_piso1(conn: sqlite3.Connection) -> None:
